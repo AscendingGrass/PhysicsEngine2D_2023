@@ -17,10 +17,11 @@ namespace PhysicsEngine2D_2023
         public EnvironmentVisualizer(PhysicsEnvironment2D environment)
         {
             InitializeComponent();
-            this.Width  = (int)Math.Round(environment.Width);
-            this.Height = (int)Math.Round(environment.Height);
+            environment.Width  = Width;
+            environment.Height = Height;
             environment.Updated += Environment_Updated;
             this.Environment = environment;
+            
         }
 
         private void Environment_Updated(object? sender, EventArgs e) => this.Invalidate();
@@ -39,8 +40,15 @@ namespace PhysicsEngine2D_2023
                             (float)(box.BottomRight.X - box.Location.X),
                             (float)(box.BottomRight.Y - box.Location.Y)
                         );
+                    continue;
                 }
             }
+        }
+
+        private void EnvironmentVisualizer_SizeChanged(object sender, EventArgs e)
+        {
+            Environment.Width = Width;
+            Environment.Height = Height;
         }
     }
 }

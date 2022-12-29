@@ -70,7 +70,8 @@ namespace PhysicsEngine2D_2023
 
         public static void ResolveCollision(Object2D o1, Object2D o2)
         {
-
+            o1.Velocity = -o1.Velocity;
+            o2.Velocity = -o2.Velocity;
         }
     }
 

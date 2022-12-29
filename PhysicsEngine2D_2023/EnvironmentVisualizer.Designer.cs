@@ -37,6 +37,7 @@
             this.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.Name = "EnvironmentVisualizer";
             this.Size = new System.Drawing.Size(666, 402);
+            this.SizeChanged += new System.EventHandler(this.EnvironmentVisualizer_SizeChanged);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.EnvironmentVisualizer_Paint);
             this.ResumeLayout(false);
 

@@ -13,6 +13,7 @@ public struct Vec2
     public double X, Y;
 
     public double Length => Math.Sqrt(X*X + Y*Y);
+    public Vec2 Normal => new Vec2(1, -1 / (Y/X) ).Unit;
     public Vec2 Unit => this / Length;
 
     #region constructors
@@ -25,11 +26,16 @@ public struct Vec2
         return X*v.X + Y*v.Y;
     }
 
+    public void SetY(double y) => this.Y = y;
+    public void SetX(double x) => this.X = x;
+
     #region operator overloads
     public static Vec2 operator +(Vec2 c1, Vec2 c2) =>
         new Vec2(c1.X + c2.X, c1.Y + c2.Y);
     public static Vec2 operator -(Vec2 c1, Vec2 c2) =>
         new Vec2(c1.X - c2.X, c1.Y - c2.Y);
+    public static Vec2 operator -(Vec2 c1) =>
+       new Vec2(-c1.X, -c1.Y);
     public static Vec2 operator *(Vec2 c1, Vec2 c2) =>
         new Vec2(c1.X * c2.X, c1.Y * c2.Y);
     public static Vec2 operator *(Vec2 c1, double mult) =>

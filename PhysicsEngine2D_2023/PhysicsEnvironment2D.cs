@@ -9,14 +9,14 @@ namespace PhysicsEngine2D_2023;
 
 public class PhysicsEnvironment2D
 {
-    public double Width  { get;}
-    public double Height { get;}
+    public double Width  { get; set; }
+    public double Height { get; set; }
     public double Gravity { get; set; }
 
     public int CountObjects => objects.Count;
 
     private bool isRunning;
-    private Timer timer = new Timer() {Interval = 10};
+    private Timer timer = new Timer() {Interval = 25};
 
     public bool IsRunning
     {
@@ -27,7 +27,7 @@ public class PhysicsEnvironment2D
 
     public event EventHandler? Updated;
 
-    public PhysicsEnvironment2D(double width, double height, double gravity = 10)
+    public PhysicsEnvironment2D(double width=100, double height=100, double gravity = 100)
     {
         Width = width;
         Height = height;
@@ -41,8 +41,15 @@ public class PhysicsEnvironment2D
     {
         foreach (var item in objects)
         {
+            if (item is Box2D b && b.BottomRight.Y > Height)
+            {
+                item.Location = new Vec2(item.Location.X, Height - b.Size.Y);
+                item.Velocity = new Vec2(item.Velocity.X * item.Friction,-item.Velocity.Y * item.Restitution) ;
+                continue;
+            }
+            
             item.Velocity += new Vec2(0, Gravity * timer.Interval/1000);
-            item.Location += item.Velocity;
+            item.Location += item.Velocity * timer.Interval/1000;
         }
 
         for (int i = 0; i < objects.Count; i++)
