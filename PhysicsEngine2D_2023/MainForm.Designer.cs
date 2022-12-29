@@ -1,6 +1,6 @@
 ﻿namespace PhysicsEngine2D_2023
 {
-    partial class Form1
+    partial class MainForm
     {
         /// <summary>
         ///  Required designer variable.
