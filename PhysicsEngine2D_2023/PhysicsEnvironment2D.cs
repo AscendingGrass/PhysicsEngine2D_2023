@@ -12,7 +12,7 @@ public class PhysicsEnvironment2D
     public double Width  { get; set; }
     public double Height { get; set; }
     public double Gravity { get; set; }
-
+    
     public int CountObjects => objects.Count;
 
     private bool isRunning;
@@ -27,7 +27,7 @@ public class PhysicsEnvironment2D
 
     public event EventHandler? Updated;
 
-    public PhysicsEnvironment2D(double width=100, double height=100, double gravity = 100)
+    public PhysicsEnvironment2D(double width=100, double height=100, double gravity = 1000)
     {
         Width = width;
         Height = height;
@@ -41,15 +41,15 @@ public class PhysicsEnvironment2D
     {
         foreach (var item in objects)
         {
-            if (item is Box2D b && b.BottomRight.Y > Height)
+            item.Velocity += new Vec2(0, Gravity * timer.Interval/1000);
+            var temp = item.Location + (item.Velocity * timer.Interval / 1000);
+            if (item is Box2D b && (temp.Y + b.Size.Y > Height || temp.Y < 0))
             {
-                item.Location = new Vec2(item.Location.X, Height - b.Size.Y);
-                item.Velocity = new Vec2(item.Velocity.X * item.Friction,-item.Velocity.Y * item.Restitution) ;
+                item.Location = new Vec2(item.Location.X, (temp.Y < 0? 0 :  Height - b.Size.Y));
+                item.Velocity = new Vec2(item.Velocity.X * item.Friction,  -item.Velocity.Y * item.Restitution) ;
                 continue;
             }
-            
-            item.Velocity += new Vec2(0, Gravity * timer.Interval/1000);
-            item.Location += item.Velocity * timer.Interval/1000;
+            item.Location = temp;
         }
 
         for (int i = 0; i < objects.Count; i++)

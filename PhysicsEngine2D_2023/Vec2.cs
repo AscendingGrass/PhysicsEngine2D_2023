@@ -13,7 +13,7 @@ public struct Vec2
     public double X, Y;
 
     public double Length => Math.Sqrt(X*X + Y*Y);
-    public Vec2 Normal => new Vec2(1, -1 / (Y/X) ).Unit;
+    public Vec2 Normal => new Vec2(1, -(X/Y) ).Unit;
     public Vec2 Unit => this / Length;
 
     #region constructors
