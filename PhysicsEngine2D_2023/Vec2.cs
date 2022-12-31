@@ -12,9 +12,23 @@ public struct Vec2
 
     public double X, Y;
 
-    public double Length => Math.Sqrt(X*X + Y*Y);
-    public Vec2 Normal => new Vec2(1, -(X/Y) ).Unit;
-    public Vec2 Unit => this / Length;
+    public double Magnitude => Math.Sqrt(X*X + Y*Y);
+    public Vec2 SurfaceNormal => new Vec2(-Y, X).Normalized;
+    public Vec2 FastSurfaceNormal => new Vec2(-Y, X).FastNormalized;
+    public Vec2 Normalized => this / Magnitude;
+    public Vec2 FastNormalized
+    {
+        get
+        {
+            double aX = Math.Abs(X);
+            double aY = Math.Abs(Y);
+            double ratio = 1 / Math.Max(aX, aY);
+            ratio *= (1.29289 - (aX + aY) * ratio * 0.29289);
+            return new Vec2(X*ratio, Y*ratio);
+        } 
+    }
+
+
 
     #region constructors
     public Vec2(double x = 0, double y = 0) =>

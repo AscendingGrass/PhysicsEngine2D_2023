@@ -14,7 +14,6 @@ internal class Edge
         double slope = line.Y / line.X; //slope of the line
         double perpSlope = double.IsInfinity(slope) ? 0 : -1 / slope;  //the perpendicular of the slope
         
-
         //calculate the intersection point of the line and another line ('point' with perpSlope as its slope)
         //to find the closest point from the line to 'point'
         double closestX = double.IsInfinity(perpSlope) ? point.X : ( double.IsInfinity(slope) ? 0 : ((perpSlope * -point.X) - (slope * -lineStart.X) + point.Y - lineStart.Y) / (slope-perpSlope) );
@@ -36,8 +35,8 @@ internal class Edge
         }
 
         //calculate the distance with pythagorean theorem
-        double distance = (closestPoint - point).Length;
+        double distance = (closestPoint - point).Magnitude;
 
-        return new LPDData(lineStart, lineEnd, closestPoint, distance, isPerpendicular);
+        return new LPDData(lineStart, lineEnd, point, closestPoint, distance, isPerpendicular);
     }
 }

@@ -37,7 +37,7 @@ namespace PhysicsEngine2D_2023
                 {
                     g.FillRectangle(brush,
                             (float)box.Location.X,
-                            (float)box.Location.Y,
+                            (float)(Height - box.BottomRight.Y) ,
                             (float)(box.BottomRight.X - box.Location.X),
                             (float)(box.BottomRight.Y - box.Location.Y)
                         );

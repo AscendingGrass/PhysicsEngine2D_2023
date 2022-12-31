@@ -32,7 +32,6 @@ public class PhysicsEnvironment2D
         Width = width;
         Height = height;
         Gravity = gravity;
-
         isRunning = false;
         timer.Tick += Update;
     }
@@ -41,12 +40,13 @@ public class PhysicsEnvironment2D
     {
         foreach (var item in objects)
         {
-            item.Velocity += new Vec2(0, Gravity * timer.Interval/1000);
-            var temp = item.Location + (item.Velocity * timer.Interval / 1000);
+            double deltaTime = timer.Interval / 1000.0;
+            item.Velocity += new Vec2(0, -Gravity * deltaTime);
+            var temp = item.Location + (item.Velocity * deltaTime);
             if (item is Box2D b && (temp.Y + b.Size.Y > Height || temp.Y < 0))
             {
-                item.Location = new Vec2(item.Location.X, (temp.Y < 0? 0 :  Height - b.Size.Y));
-                item.Velocity = new Vec2(item.Velocity.X * item.Friction,  -item.Velocity.Y * item.Restitution) ;
+                item.Location = new Vec2(item.Location.X + (item.Velocity.X * deltaTime), (temp.Y < 0? 0 :  Height - b.Size.Y));
+                item.Velocity = new Vec2(item.Velocity.X * (1-item.Friction),  -item.Velocity.Y * item.Restitution) ;
                 continue;
             }
             item.Location = temp;
