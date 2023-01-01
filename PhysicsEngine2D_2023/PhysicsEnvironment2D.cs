@@ -16,7 +16,7 @@ public class PhysicsEnvironment2D
     public int CountObjects => objects.Count;
 
     private bool isRunning;
-    private Timer timer = new Timer() {Interval = 25};
+    private Timer timer = new Timer() {Interval = 10};
 
     public bool IsRunning
     {
@@ -27,7 +27,7 @@ public class PhysicsEnvironment2D
 
     public event EventHandler? Updated;
 
-    public PhysicsEnvironment2D(double width=100, double height=100, double gravity = 1000)
+    public PhysicsEnvironment2D(double width=100, double height=100, double gravity = 100)
     {
         Width = width;
         Height = height;
@@ -41,12 +41,12 @@ public class PhysicsEnvironment2D
         foreach (var item in objects)
         {
             double deltaTime = timer.Interval / 1000.0;
-            item.Velocity += new Vec2(0, -Gravity * deltaTime);
+            if(!item.IsStatic) item.Velocity += new Vec2(0, -Gravity * deltaTime);
             var temp = item.Location + (item.Velocity * deltaTime);
             if (item is Box2D b && (temp.Y + b.Size.Y > Height || temp.Y < 0))
             {
                 item.Location = new Vec2(item.Location.X + (item.Velocity.X * deltaTime), (temp.Y < 0? 0 :  Height - b.Size.Y));
-                item.Velocity = new Vec2(item.Velocity.X * (1-item.Friction),  -item.Velocity.Y * item.Restitution) ;
+                item.Velocity -=  new Vec2(item.Velocity.X * item.Friction * deltaTime,  -item.Velocity.Y * item.Restitution);
                 continue;
             }
             item.Location = temp;
@@ -56,8 +56,9 @@ public class PhysicsEnvironment2D
         {
             for (int j = i+1; j < objects.Count; j++)
             {
-                if (Object2D.IsIntersected(objects[i], objects[j]))
-                    Object2D.ResolveCollision(objects[i], objects[j]);
+                bool isIntersected = Object2D.IsIntersected(objects[i], objects[j], out IntersectionData? data);
+                if (isIntersected)
+                    Object2D.ResolveCollision(data);
             }
         }
 
@@ -82,10 +83,6 @@ public class PhysicsEnvironment2D
 
     public void AddObject2D(Object2D o)
     {
-        foreach (var item in objects)
-        {
-            if(Object2D.IsIntersected(item,o)) Object2D.ResolveCollision(item,o);
-        }
         objects.Add(o);
     }
 }

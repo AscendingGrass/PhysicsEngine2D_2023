@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PhysicsEngine2D_2023
 {
-    public class Shape
+    public class Shape : ICloneable
     {
         //should be ordered to form edges that make up a shape
         //ex. {(0,0), (0,1), (1,1), (1,0)} would make a square
@@ -22,7 +22,34 @@ namespace PhysicsEngine2D_2023
             Vertices = vertices;
         }
 
-        public bool IsInside(Vec2 localPoint, out LPDData? data)
+        public void Offset(Vec2 offset)
+        {
+            for (int i = 0; i < Vertices.Length; i++)
+            {
+                Vertices[i] += offset;
+            }
+        }
+
+        public LPDData[] IntersectingVertices(Shape shape)
+        {
+            var list = new List<LPDData>(Vertices.Length/2);
+            foreach (var item in Vertices)
+            {
+                if(shape.Contains(item, out LPDData? data))
+                {
+                    
+                    list.Add(data.Value);
+                }
+            }
+            return list.ToArray();
+        }
+
+        public bool Contains(Vec2 globalPoint, Vec2 shapeLocation, out LPDData? data)
+        {
+            return Contains(globalPoint-shapeLocation, out data);
+        }
+        
+        public virtual bool Contains(Vec2 localPoint, out LPDData? data)
         {
             data = null;
 
@@ -39,9 +66,6 @@ namespace PhysicsEngine2D_2023
             double outsideDistance = (closestLD.ClosestLinePoint + lineSurfaceNormal - localPoint).Magnitude;
             double insideDistance  = (closestLD.ClosestLinePoint - lineSurfaceNormal - localPoint).Magnitude;
 
-            MessageBox.Show($"line : {(closestLD.LineEnd - closestLD.LineStart)} | surfaceNormal : {lineSurfaceNormal}");
-            MessageBox.Show($"outside : {outsideDistance} | inside : {insideDistance} ");
-
             if (outsideDistance < insideDistance) return false;
 
             data = closestLD;
@@ -51,6 +75,38 @@ namespace PhysicsEngine2D_2023
         public void InvertNormals()
         {
             Array.Reverse(Vertices);
+        }
+
+        public virtual object Clone()
+        {
+            return new Shape((Vec2[])Vertices.Clone());
+        }
+    }
+
+    public class Rectangle : Shape
+    {
+        public Rectangle(Vec2 size) 
+            : base(new[] { Vec2.Zero, new Vec2(0, size.Y), new Vec2(size.X, size.Y), new Vec2(size.X, 0) }) 
+        { }
+    }
+
+    public class Circle : Shape
+    {
+        public double Radius { get; init; }
+        public Circle(double radius) : base(null)
+        {
+            Radius = radius;
+        }
+
+        public override bool Contains(Vec2 localPoint, out LPDData? data)
+        {
+            throw new NotImplementedException();
+            return base.Contains(localPoint, out data);
+        }
+
+        public override object Clone()
+        {
+            return new Circle(Radius);
         }
     }
 }

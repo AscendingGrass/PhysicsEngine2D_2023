@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace PhysicsEngine2D_2023;
 
-public struct Vec2
+public readonly struct Vec2
 {
     public readonly static Vec2 Zero = new Vec2(0, 0);
 
-    public double X, Y;
+    public readonly double X, Y;
 
     public double Magnitude => Math.Sqrt(X*X + Y*Y);
     public Vec2 SurfaceNormal => new Vec2(-Y, X).Normalized;
@@ -39,9 +39,6 @@ public struct Vec2
     {
         return X*v.X + Y*v.Y;
     }
-
-    public void SetY(double y) => this.Y = y;
-    public void SetX(double x) => this.X = x;
 
     #region operator overloads
     public static Vec2 operator +(Vec2 c1, Vec2 c2) =>
