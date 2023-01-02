@@ -57,13 +57,30 @@ public readonly struct Vec2
         new Vec2(c1.X / c2.X, c1.Y / c2.Y);
     public static Vec2 operator /(Vec2 c1, double div) =>
         new Vec2(c1.X / div, c1.Y / div);
-
+    public static bool operator ==(Vec2 c1, Vec2 c2) =>
+        c1.Equals(c2);
+    public static bool operator !=(Vec2 c1, Vec2 c2) =>
+        !c1.Equals(c2);
     #endregion
+
+
 
     public override string ToString() =>
         $"Coord({X},{Y})";
 
     public void Deconstruct(out double x, out double y) =>
         (x, y) = (X, Y);
+
+    public override bool Equals(object? obj)
+    {
+        return obj is Vec2 vec &&
+               X == vec.X &&
+               Y == vec.Y;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(X, Y);
+    }
 }
 

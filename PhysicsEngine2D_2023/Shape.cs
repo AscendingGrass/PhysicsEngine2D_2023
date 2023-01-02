@@ -8,6 +8,8 @@ namespace PhysicsEngine2D_2023
 {
     public class Shape : ICloneable
     {
+        const double CollisionEdgeBuffer = .1;
+
         //should be ordered to form edges that make up a shape
         //ex. {(0,0), (0,1), (1,1), (1,0)} would make a square
         //while this wouldn't {(0,0), (1,1), (0,1), (1,0)} 
@@ -59,7 +61,7 @@ namespace PhysicsEngine2D_2023
                 var temp = Edge.CalculateDistance(Vertices[i-1], Vertices[i], localPoint);
                 if(temp.Distance < closestLD.Distance) closestLD = temp;
             }
-
+            data = closestLD;
             if (!closestLD.isPerpendicular) return false;
             var lineSurfaceNormal = (closestLD.LineEnd - closestLD.LineStart).FastSurfaceNormal;
 
