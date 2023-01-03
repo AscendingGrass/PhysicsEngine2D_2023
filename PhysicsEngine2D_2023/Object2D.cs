@@ -17,8 +17,8 @@ namespace PhysicsEngine2D_2023
         private bool isStatic;
         private double inverseMass;
 
-        private readonly Shape objectShape;
-        private readonly Shape positionalShape;
+        private Shape objectShape = null;
+        private Shape positionalShape = null;
 
         public Shape ObjectShape
         {
@@ -92,21 +92,15 @@ namespace PhysicsEngine2D_2023
             Friction = friction;
         }
 
-        public static bool IsIntersected(Object2D o1, Object2D o2, out IntersectionData? data)
+        public static bool IsIntersected(Object2D o1, Object2D o2, out IntersectionData data)
         {
             var i1 = o1.PositionalShape.IntersectingVertices(o2.PositionalShape);
             var i2 = o2.PositionalShape.IntersectingVertices(o1.PositionalShape);
 
-            data = null;
-            LPDData max;
-            try
-            {
-                max = i1[0];
-            }
-            catch (Exception) { return false; }
+            data = IntersectionData.Empty;
+            LPDData max = new LPDData(Vec2.Empty, Vec2.Empty, Vec2.Empty, Vec2.Empty, double.MinValue, false);
 
-
-            for (int i = 1; i < i1.Length; i++)
+            for (int i = 0; i < i1.Length; i++)
             {
                 if (i1[i].Distance > max.Distance)
                 {
@@ -123,58 +117,54 @@ namespace PhysicsEngine2D_2023
                 }
             }
 
+            if (max.Distance == double.MinValue) return false;
+
             var obj1 = o2;
             var obj2 = o1;
             if (flag)
             {
                 (obj1, obj2) = (obj2, obj1);
             }
-            Vec2 normal = (Vec2)(max.LineEnd - max.LineStart).FastSurfaceNormal;
+            // if the max shape is circle, calculate the normal differently
+            bool isEmpty = max.LineStart == Vec2.Empty;
+            var normal = isEmpty ? (max.ClosestLinePoint - max.Point).FastUnitNormal : (max.LineEnd - max.LineStart).FastSurfaceNormal;
+            
             data = new IntersectionData(obj1, obj2, normal, max);
             return true;
-
-            //if (o1 is Box2D b1 && o2 is Box2D b2)
-            //{
-            //    if (b1.TopLeft.X > b2.BottomRight.X || b1.BottomRight.X < b2.TopLeft.X) return false;
-            //    if (b1.TopLeft.Y > b2.BottomRight.Y || b1.BottomRight.Y < b2.TopLeft.Y) return false;
-            //    return true;
-            //}
-
-            //return false;
         }
 
 
         // Reference : https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
-        public static void ResolveCollision(IntersectionData? data)
+        public static void ResolveCollision(IntersectionData data)
         {
-            if (!data.HasValue) return;
-            var d = data.Value;
-            var relativeVelocity = d.b.Velocity - d.a.Velocity;
+            if (data == IntersectionData.Empty) return;
 
-            double velocityAlongNormal = relativeVelocity.Dot(d.faceNormalA);
+            var relativeVelocity = data.b.Velocity - data.a.Velocity;
+
+            double velocityAlongNormal = relativeVelocity.Dot(data.faceNormalA);
 
             // Do not resolve if velocities are separating 
             if (velocityAlongNormal > 0) return;
 
             // Calculate restitution 
-            double e = Math.Min(d.a.Restitution, d.b.Restitution);
+            double e = Math.Min(data.a.Restitution, data.b.Restitution);
 
             // Calculate impulse scalar
             double j = -(1 + e) * velocityAlongNormal;
-            j /=  d.a.inverseMass + d.b.inverseMass;
+            j /=  data.a.inverseMass + data.b.inverseMass;
 
             // Apply impulse
 
-            var impulse = j * d.faceNormalA;
-            d.a.velocity -= d.a.inverseMass * impulse;
-            d.b.velocity += d.b.inverseMass * impulse;
+            var impulse = j * data.faceNormalA;
+            data.a.velocity -= data.a.inverseMass * impulse;
+            data.b.velocity += data.b.inverseMass * impulse;
 
-            PositionalCorrection(d);
+            PositionalCorrection(data);
         }
 
         public static void PositionalCorrection(IntersectionData data)
         {
-            Vec2 correction = (Math.Max(data.lpdData.Value.Distance - PositionalCorrectionSlop, 0) / (data.a.inverseMass + data.b.inverseMass)) * PositionalCorrectionPower * data.faceNormalA;
+            Vec2 correction = (Math.Max(data.lpdData.Distance - PositionalCorrectionSlop, 0) / (data.a.inverseMass + data.b.inverseMass)) * PositionalCorrectionPower * data.faceNormalA;
             data.a.Location -= data.a.inverseMass * correction;
             data.b.Location += data.b.inverseMass * correction;
         }
@@ -196,7 +186,7 @@ namespace PhysicsEngine2D_2023
         public Box2D(Vec2 location, Vec2 size, double mass , double restitution, double friction, Vec2 velocity) 
             : base(
                 location, 
-                new Rectangle(size), 
+                Shape.Rectangle(size), 
                 mass,
                 restitution, 
                 friction, 
@@ -206,5 +196,22 @@ namespace PhysicsEngine2D_2023
         }
 
         public Box2D(Vec2 location, Vec2 size, double mass, double restitution, double friction) : this(location, size, mass, restitution, friction, Vec2.Zero) { }
+    }
+
+    public class Sphere2D : Object2D
+    {
+        public Sphere2D(Vec2 location, double radius, double mass, double restitution, double friction, Vec2 velocity)
+            : base(
+                location,
+                new Circle(radius),
+                mass,
+                restitution,
+                friction,
+                velocity)
+        {
+            
+        }
+
+        public Sphere2D(Vec2 location, double radius, double mass, double restitution, double friction) : this(location, radius, mass, restitution, friction, Vec2.Zero) { }
     }
 }

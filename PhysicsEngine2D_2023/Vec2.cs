@@ -8,15 +8,16 @@ namespace PhysicsEngine2D_2023;
 
 public readonly struct Vec2
 {
-    public readonly static Vec2 Zero = new Vec2(0, 0);
+    public readonly static Vec2 Zero  = new Vec2(0, 0);
+    public readonly static Vec2 Empty = new Vec2(double.NaN, double.NaN);
 
     public readonly double X, Y;
 
     public double Magnitude => Math.Sqrt(X*X + Y*Y);
-    public Vec2 SurfaceNormal => new Vec2(-Y, X).Normalized;
-    public Vec2 FastSurfaceNormal => new Vec2(-Y, X).FastNormalized;
-    public Vec2 Normalized => this / Magnitude;
-    public Vec2 FastNormalized
+    public Vec2 SurfaceNormal => new Vec2(-Y, X).UnitNormal;
+    public Vec2 FastSurfaceNormal => new Vec2(-Y, X).FastUnitNormal;
+    public Vec2 UnitNormal => this / Magnitude;
+    public Vec2 FastUnitNormal
     {
         get
         {
@@ -73,9 +74,10 @@ public readonly struct Vec2
 
     public override bool Equals(object? obj)
     {
-        return obj is Vec2 vec &&
-               X == vec.X &&
-               Y == vec.Y;
+        return obj is Vec2 vec && (
+               (X == vec.X && Y == vec.Y) ||
+               (double.IsNaN(X) && double.IsNaN(Y) && double.IsNaN(vec.X) && double.IsNaN(vec.Y))
+               );
     }
 
     public override int GetHashCode()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,7 +9,8 @@ namespace PhysicsEngine2D_2023
 {
     public class Shape : ICloneable
     {
-        const double CollisionEdgeBuffer = .1;
+
+
 
         //should be ordered to form edges that make up a shape
         //ex. {(0,0), (0,1), (1,1), (1,0)} would make a square
@@ -24,7 +26,16 @@ namespace PhysicsEngine2D_2023
             Vertices = vertices;
         }
 
-        public void Offset(Vec2 offset)
+        public static Shape Rectangle(Vec2 size)
+        {
+            return Rectangle(Vec2.Zero, size);
+        }
+
+        public static Shape Rectangle(Vec2 offset, Vec2 size)
+        {
+            return new Shape(new[] { offset, new Vec2(offset.X, size.Y+offset.Y), new Vec2(size.X+offset.X, size.Y+offset.Y), new Vec2(size.X+offset.X, offset.Y) });
+        }
+        public virtual void Offset(Vec2 offset)
         {
             for (int i = 0; i < Vertices.Length; i++)
             {
@@ -34,44 +45,42 @@ namespace PhysicsEngine2D_2023
 
         public LPDData[] IntersectingVertices(Shape shape)
         {
-            var list = new List<LPDData>(Vertices.Length/2);
+            var list = new List<LPDData>(Vertices.Length/2+1);
             foreach (var item in Vertices)
             {
-                if(shape.Contains(item, out LPDData? data))
+                if(shape.Contains(item, out LPDData data))
                 {
-                    
-                    list.Add(data.Value);
+                    list.Add(data);
                 }
             }
             return list.ToArray();
         }
 
-        public bool Contains(Vec2 globalPoint, Vec2 shapeLocation, out LPDData? data)
-        {
-            return Contains(globalPoint-shapeLocation, out data);
-        }
+        //public bool Contains(Vec2 globalPoint, Vec2 shapeLocation, out LPDData data)
+        //{
+        //    return Contains(globalPoint-shapeLocation, out data);
+        //}
         
-        public virtual bool Contains(Vec2 localPoint, out LPDData? data)
+        public virtual bool Contains(Vec2 localPoint, out LPDData data)
         {
-            data = null;
-
             var closestLD = Edge.CalculateDistance(Vertices[Vertices.Length-1], Vertices[0], localPoint);
             for (int i = 1; i < Vertices.Length; i++)
             {
                 var temp = Edge.CalculateDistance(Vertices[i-1], Vertices[i], localPoint);
-                if(temp.Distance < closestLD.Distance) closestLD = temp;
+                if (temp == LPDData.Empty) continue;
+                if (temp.Distance < closestLD.Distance) closestLD = temp;
             }
             data = closestLD;
-            if (!closestLD.isPerpendicular) return false;
+            if (closestLD == LPDData.Empty) return false;
+
             var lineSurfaceNormal = (closestLD.LineEnd - closestLD.LineStart).FastSurfaceNormal;
 
             double outsideDistance = (closestLD.ClosestLinePoint + lineSurfaceNormal - localPoint).Magnitude;
             double insideDistance  = (closestLD.ClosestLinePoint - lineSurfaceNormal - localPoint).Magnitude;
 
-            if (outsideDistance < insideDistance) return false;
-
-            data = closestLD;
-            return true;
+            //if the outside distance is greater than the inside distance,
+            //the point is located inside the shape
+            return outsideDistance >= insideDistance;
         }
 
         public void InvertNormals()
@@ -94,21 +103,47 @@ namespace PhysicsEngine2D_2023
 
     public class Circle : Shape
     {
+        public Vec2 Center { get; private set; }
         public double Radius { get; init; }
-        public Circle(double radius) : base(null)
+        public Circle(Vec2 position, double radius) : base(new Vec2[0])
         {
+            Center = position;
             Radius = radius;
         }
 
-        public override bool Contains(Vec2 localPoint, out LPDData? data)
+        public Circle(double radius) : this(Vec2.Zero, radius) { }
+
+        public override void Offset(Vec2 offset)
         {
-            throw new NotImplementedException();
-            return base.Contains(localPoint, out data);
+            Center += offset;
+        }
+
+        public override bool Contains(Vec2 localPoint, out LPDData data)
+        {
+            var direction = (localPoint - Center);
+            double magnitude = direction.Magnitude;
+            bool isInside = magnitude <= Radius;
+            
+            if (isInside)
+            {
+                //cos θ = (a · b) / (|a| |b|)
+                //source : https://www.cuemath.com/geometry/angle-between-vectors/
+
+                double cosValue = direction.Dot(new Vec2(1, 0)) / magnitude;
+                double slope = direction.Y / direction.X;
+                double localClosestX = Radius * cosValue;
+                double localClosestY = double.IsInfinity(slope) ? 0 : (slope * localClosestX);
+
+                data = new LPDData(Vec2.Empty, Vec2.Empty, localPoint, (new Vec2(localClosestX, localClosestY) + Center), Radius-magnitude, true);
+                return true;
+            }
+            data = LPDData.Empty;
+            return false;
         }
 
         public override object Clone()
         {
-            return new Circle(Radius);
+            return new Circle(Center, Radius);
         }
     }
 }

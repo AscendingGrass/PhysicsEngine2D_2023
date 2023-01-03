@@ -14,7 +14,8 @@ namespace PhysicsEngine2D_2023
     public partial class EnvironmentVisualizer : UserControl
     {
         public PhysicsEnvironment2D Environment;
-        private Brush brush = new SolidBrush(Color.Black);
+
+        //private Brush brush = new SolidBrush(Color.Black);
         public EnvironmentVisualizer(PhysicsEnvironment2D environment)
         {
             InitializeComponent();
@@ -33,15 +34,19 @@ namespace PhysicsEngine2D_2023
             
             for (int i = 0; i < Environment.CountObjects; i++)
             {
-                if (Environment[i] is Box2D box)
+                if (Environment[i] is Sphere2D s)
                 {
-                    g.FillRectangle(brush,
-                            (float)box.Location.X,
-                            (float)(Height - box.BottomRight.Y) ,
-                            (float)(box.BottomRight.X - box.Location.X),
-                            (float)(box.BottomRight.Y - box.Location.Y)
-                        );
-                    continue;
+                    Circle c = ((Circle)s.PositionalShape);
+                    using (var brush = new SolidBrush(Color.Black))
+                    {
+                        g.FillEllipse(brush, (int)Math.Round(c.Center.X), (int)Math.Round(Height - c.Center.Y), (int)Math.Round(c.Radius), (int)Math.Round(c.Radius));
+                        continue;
+                    }
+
+                }
+                using (var brush = new SolidBrush(Color.Black))
+                {
+                    g.FillPolygon(brush, Environment[i].PositionalShape.Vertices.Select(x => new Point((int)Math.Round(x.X), (int)Math.Round(Height - x.Y))).ToArray());
                 }
             }
         }

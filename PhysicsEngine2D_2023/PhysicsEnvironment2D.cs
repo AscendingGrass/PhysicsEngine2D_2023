@@ -1,11 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Timer = System.Windows.Forms.Timer;
 
 namespace PhysicsEngine2D_2023;
+
+public class UpdateEventArgs : EventArgs
+{
+    public double DeltaTime;
+
+    public UpdateEventArgs(double deltaTime)
+    {
+        DeltaTime = deltaTime;
+    }
+}
 
 public class PhysicsEnvironment2D
 {
@@ -16,7 +27,16 @@ public class PhysicsEnvironment2D
     public int CountObjects => objects.Count;
 
     private bool isRunning;
-    private Timer timer = new Timer() {Interval = 10};
+    private long lastRecordedTicks;
+    private Task updateTask;
+    private Stopwatch sw = new Stopwatch();
+    private double minDeltaTime = .01;
+
+    public int FPSLimit
+    {
+        get => (int)Math.Round(1 / minDeltaTime);
+        set => minDeltaTime = 1.0/value;
+    }
 
     public bool IsRunning
     {
@@ -33,14 +53,27 @@ public class PhysicsEnvironment2D
         Height = height;
         Gravity = gravity;
         isRunning = false;
-        timer.Tick += Update;
+        updateTask = new Task(Update);
+        //timer.Tick += Update;
     }
 
-    private void Update(object? sender, EventArgs e)
+    private void ExecuteUpdates()
     {
+        while (isRunning)
+        {
+            Update();
+        }
+    }
+
+    private void Update()
+    {
+        double deltaTime = (sw.ElapsedTicks - lastRecordedTicks) / 10_000_000.0;
+        if (deltaTime < minDeltaTime) return;
+        lastRecordedTicks = sw.ElapsedTicks;
+        //MessageBox.Show(deltaTime.ToString());
         foreach (var item in objects)
         {
-            double deltaTime = timer.Interval / 1000.0;
+            //double deltaTime = timer.Interval / 1000.0;
             if(!item.IsStatic) item.Velocity += new Vec2(0, -Gravity * deltaTime);
             var temp = item.Location + (item.Velocity * deltaTime);
             if (item is Box2D b && (temp.Y + b.Size.Y > Height || temp.Y < 0))
@@ -51,18 +84,18 @@ public class PhysicsEnvironment2D
             }
             item.Location = temp;
         }
-
+        
         for (int i = 0; i < objects.Count; i++)
         {
             for (int j = i+1; j < objects.Count; j++)
             {
-                bool isIntersected = Object2D.IsIntersected(objects[i], objects[j], out IntersectionData? data);
+                bool isIntersected = Object2D.IsIntersected(objects[i], objects[j], out IntersectionData data);
                 if (isIntersected)
                     Object2D.ResolveCollision(data);
             }
         }
-
-        Updated?.Invoke(this,EventArgs.Empty);
+        
+        Updated?.Invoke(this, new UpdateEventArgs(deltaTime));
     }
 
     public Object2D this[int index] => objects[index]; 
@@ -70,15 +103,22 @@ public class PhysicsEnvironment2D
     public void Run()
     {
         if (isRunning) return;
+        lastRecordedTicks = 0;
+        sw.Restart();
         isRunning = true;
-        timer.Start();
+        updateTask = new Task(ExecuteUpdates);
+        
+        updateTask.Start();
+        //timer.Start();
     }
 
-    public void Stop()
+    public async void Stop()
     {
         if (!isRunning) return;
+        sw.Stop();
         isRunning = false;
-        timer.Stop();
+        await updateTask;
+        //timer.Stop();
     }
 
     public void AddObject2D(Object2D o)
