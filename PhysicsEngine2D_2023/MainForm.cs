@@ -47,16 +47,18 @@ public partial class MainForm : Form
         //MessageBox.Show((Vec2.Empty == new Vec2(double.NaN, double.NaN)).ToString());
         //return;
         visualizer = new EnvironmentVisualizer(new PhysicsEnvironment2D());
-        visualizer.Environment.FPSLimit = 60;
+        visualizer.Environment.FPSLimit = 20;
         visualizer.Environment.Updated += CountFPS;
         visualizer.Environment.Updated += UpdateFPSLabel;
         //t.Tick += UpdateFPSLabel;
         //t.Start();
         visualizer.Dock = DockStyle.Fill;
         this.Controls.Add(visualizer);
-        visualizer.Environment.AddObject2D(new Box2D(new Vec2(200, 100), new Vec2(100, 100), 1, .1, .99, new Vec2(0, 0)));
-        visualizer.Environment.AddObject2D(new Box2D(new Vec2(500, 0), new Vec2(100, 105), 1, .7, .99, new Vec2(0, 0)));
-        visualizer.Environment.AddObject2D(new Sphere2D(new Vec2(270, 400), 100, 1, .7, .99, new Vec2(0, 0)));
+        Shape s = new Shape(new[] {new Vec2(0,100), new Vec2(50,150), new Vec2(100,0) });
+        visualizer.Environment.AddObject2D(new Polygon2D(new Vec2(150,200), s, 2, .5, .5, Vec2.Zero));
+        visualizer.Environment.AddObject2D(new Box2D(new Vec2(200, 0), new Vec2(100, 100), 1, .1, .99, new Vec2(500, 0)));
+        visualizer.Environment.AddObject2D(new Box2D(new Vec2(500, 0), new Vec2(100, 20), 10, .7, .99, new Vec2(-500, 0)));
+        //visualizer.Environment.AddObject2D(new Sphere2D(new Vec2(270, 400), 100, 1, .7, .99, new Vec2(0, 0)));
         //env.Environment.AddObject2D(new Box2D(new Vec2(500, 0), new Vec2(100, 105), 1, .7, .99, new Vec2(0, 0)));
         visualizer.Environment.Run();
     }
@@ -82,7 +84,6 @@ public partial class MainForm : Form
             }
             double deltaTime = Math.Round(totalDeltaTime / counter, 5);
             label1.Text = $"FPS : {(int)Math.Round(1/deltaTime)}";
-            label2.Text = $"deltaTime : {deltaTime}";
             counter = 0;
             totalDeltaTime = 0;
 

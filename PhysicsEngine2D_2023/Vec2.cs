@@ -9,7 +9,7 @@ namespace PhysicsEngine2D_2023;
 public readonly struct Vec2
 {
     public readonly static Vec2 Zero  = new Vec2(0, 0);
-    public readonly static Vec2 Empty = new Vec2(double.NaN, double.NaN);
+    public readonly static Vec2 Infinity = new Vec2(double.PositiveInfinity, double.PositiveInfinity);
 
     public readonly double X, Y;
 
@@ -74,10 +74,7 @@ public readonly struct Vec2
 
     public override bool Equals(object? obj)
     {
-        return obj is Vec2 vec && (
-               (X == vec.X && Y == vec.Y) ||
-               (double.IsNaN(X) && double.IsNaN(Y) && double.IsNaN(vec.X) && double.IsNaN(vec.Y))
-               );
+        return obj is Vec2 vec && X == vec.X && Y == vec.Y;
     }
 
     public override int GetHashCode()

@@ -47,7 +47,7 @@ public class PhysicsEnvironment2D
 
     public event EventHandler? Updated;
 
-    public PhysicsEnvironment2D(double width=100, double height=100, double gravity = 100)
+    public PhysicsEnvironment2D(double width=100, double height=100, double gravity = 1000)
     {
         Width = width;
         Height = height;
@@ -74,24 +74,30 @@ public class PhysicsEnvironment2D
         foreach (var item in objects)
         {
             //double deltaTime = timer.Interval / 1000.0;
-            if(!item.IsStatic) item.Velocity += new Vec2(0, -Gravity * deltaTime);
-            var temp = item.Location + (item.Velocity * deltaTime);
-            if (item is Box2D b && (temp.Y + b.Size.Y > Height || temp.Y < 0))
-            {
-                item.Location = new Vec2(item.Location.X + (item.Velocity.X * deltaTime), (temp.Y < 0? 0 :  Height - b.Size.Y));
-                item.Velocity -=  new Vec2(item.Velocity.X * item.Friction * deltaTime,  -item.Velocity.Y * item.Restitution);
-                continue;
-            }
-            item.Location = temp;
+            
+            item.Location = item.Location + (item.Velocity * deltaTime);
+            
+
         }
         
         for (int i = 0; i < objects.Count; i++)
         {
             for (int j = i+1; j < objects.Count; j++)
             {
+                if (objects[j].IsStatic) continue;
                 bool isIntersected = Object2D.IsIntersected(objects[i], objects[j], out IntersectionData data);
-                if (isIntersected)
-                    Object2D.ResolveCollision(data);
+                if (!isIntersected) continue;
+                var velocity = data.b.Velocity;
+                data = Object2D.FindCollisionNormal(data, data.lpdData.Point-(data.b.Velocity*deltaTime*2), 15);
+                Object2D.ResolveCollision(data);
+            }
+            if (!objects[i].IsStatic) objects[i].Velocity += new Vec2(0, -Gravity * deltaTime);
+
+            if (objects[i] is Box2D b && (b.Location.Y + b.Size.Y > Height || b.Location.Y < 0))
+            {
+                b.Location = new Vec2(b.Location.X, (b.Location.Y < 0 ? 0 : Height - b.Size.Y));
+                b.Velocity -= new Vec2(b.Velocity.X * b.Friction * deltaTime, b.Velocity.Y * b.Restitution);
+
             }
         }
         

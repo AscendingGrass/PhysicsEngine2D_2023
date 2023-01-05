@@ -98,7 +98,7 @@ namespace PhysicsEngine2D_2023
             var i2 = o2.PositionalShape.IntersectingVertices(o1.PositionalShape);
 
             data = IntersectionData.Empty;
-            LPDData max = new LPDData(Vec2.Empty, Vec2.Empty, Vec2.Empty, Vec2.Empty, double.MinValue, false);
+            LPDData max = new LPDData(Vec2.Infinity, Vec2.Infinity, Vec2.Infinity, Vec2.Infinity, double.MinValue, false);
 
             for (int i = 0; i < i1.Length; i++)
             {
@@ -126,13 +126,22 @@ namespace PhysicsEngine2D_2023
                 (obj1, obj2) = (obj2, obj1);
             }
             // if the max shape is circle, calculate the normal differently
-            bool isEmpty = max.LineStart == Vec2.Empty;
+            bool isEmpty = max.LineStart == Vec2.Infinity;
             var normal = isEmpty ? (max.ClosestLinePoint - max.Point).FastUnitNormal : (max.LineEnd - max.LineStart).FastSurfaceNormal;
             
             data = new IntersectionData(obj1, obj2, normal, max);
             return true;
         }
 
+        public static IntersectionData FindCollisionNormal(IntersectionData closestLPDData, Vec2 lastBPoint, double lineBuffer = 0)
+        {
+            if (closestLPDData == IntersectionData.Empty) return IntersectionData.Empty;
+            var datas = closestLPDData.a.PositionalShape.IntersectingEdges(closestLPDData.lpdData.Point, lastBPoint, lineBuffer);
+            if (datas.Length == 0) return closestLPDData;
+            var data = datas.MaxBy(x => x.Distance);
+            var faceNormal = (data.LineEnd - data.LineStart).FastSurfaceNormal;
+            return new IntersectionData(closestLPDData.a, closestLPDData.b, faceNormal , data);
+        }
 
         // Reference : https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
         public static void ResolveCollision(IntersectionData data)
@@ -169,6 +178,13 @@ namespace PhysicsEngine2D_2023
             data.b.Location += data.b.inverseMass * correction;
         }
 
+    }
+
+    public class Polygon2D : Object2D
+    {
+        public Polygon2D(Vec2 location, Shape shape, double mass, double restitution, double friction, Vec2 velocity) : base(location, shape, mass, restitution, friction, velocity)
+        {
+        }
     }
 
     public class Box2D : Object2D

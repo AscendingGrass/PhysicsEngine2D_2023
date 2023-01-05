@@ -43,6 +43,20 @@ namespace PhysicsEngine2D_2023
             }
         }
 
+        public LPDData[] IntersectingEdges(Vec2 lineStart, Vec2 lineEnd, double lineBuffer = 0)
+        {
+            var list = new List<LPDData>(2);
+            for (int i = 0; i < Vertices.Length; i++)
+            {
+                var intersection = Edge.IntersectingPoint(Vertices[i], Vertices[(i + 1) % Vertices.Length], lineStart, lineEnd, lineBuffer);
+                if (intersection != Vec2.Infinity)
+                {
+                    list.Add(new LPDData(Vertices[i], Vertices[(i + 1) % Vertices.Length], lineStart, intersection, (intersection-lineStart).Magnitude, true));
+                }
+            }
+            return list.ToArray();
+        }
+
         public LPDData[] IntersectingVertices(Shape shape)
         {
             var list = new List<LPDData>(Vertices.Length/2+1);
@@ -134,7 +148,7 @@ namespace PhysicsEngine2D_2023
                 double localClosestX = Radius * cosValue;
                 double localClosestY = double.IsInfinity(slope) ? 0 : (slope * localClosestX);
 
-                data = new LPDData(Vec2.Empty, Vec2.Empty, localPoint, (new Vec2(localClosestX, localClosestY) + Center), Radius-magnitude, true);
+                data = new LPDData(Vec2.Infinity, Vec2.Infinity, localPoint, (new Vec2(localClosestX, localClosestY) + Center), Radius-magnitude, true);
                 return true;
             }
             data = LPDData.Empty;
