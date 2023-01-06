@@ -44,9 +44,17 @@ namespace PhysicsEngine2D_2023
                     }
 
                 }
-                using (var brush = new SolidBrush(Color.Black))
+                using (var pen = new Pen(Color.Black,2))
                 {
-                    g.FillPolygon(brush, Environment[i].PositionalShape.Vertices.Select(x => new Point((int)Math.Round(x.X), (int)Math.Round(Height - x.Y))).ToArray());
+                    g.DrawPolygon(pen, Environment[i].PositionalShape.Vertices.Select(x => new Point((int)Math.Round(x.X), (int)Math.Round(Height - x.Y))).ToArray());
+                }
+                using (var pen = new Pen(Color.Green,2))
+                {
+                    var(xMin, yMin) = Environment[i].BoundingBox.Vertices[0];
+                    var(xMax, yMax) = Environment[i].BoundingBox.Vertices[2];
+                    //g.DrawPolygon(pen, Environment[i].BoundingBox.Vertices.Select(x => new Point((int)Math.Round(x.X), (int)Math.Round(Height - x.Y))).ToArray());
+                    g.DrawRectangle(pen, (int)Math.Round(xMin), (int)Math.Round(Height-yMax), (int)Math.Round(xMax - xMin), (int)Math.Round(yMax - yMin));
+                    g.DrawLine(pen,0,0,0,1);
                 }
             }
         }
@@ -55,6 +63,11 @@ namespace PhysicsEngine2D_2023
         {
             Environment.Width = Width;
             Environment.Height = Height;
+        }
+
+        private void EnvironmentVisualizer_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

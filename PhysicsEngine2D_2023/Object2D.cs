@@ -9,8 +9,8 @@ namespace PhysicsEngine2D_2023
 {
     public abstract class Object2D
     {
-        const double PositionalCorrectionPower = 0.2; // usually 20% to 80%
-        const double PositionalCorrectionSlop = 0.01; // usually 0.01 to 0.1
+        const double PositionalCorrectionPower = 0.4; // usually 20% to 80%
+        const double PositionalCorrectionSlop = .01; // usually 0.01 to 0.1
 
         private Vec2 location;
         private Vec2 velocity;
@@ -19,6 +19,9 @@ namespace PhysicsEngine2D_2023
 
         private Shape objectShape = null;
         private Shape positionalShape = null;
+        private BoundingBox boundingBox = null;
+
+
 
         public Shape ObjectShape
         {
@@ -32,10 +35,20 @@ namespace PhysicsEngine2D_2023
             }
         }
 
+        public BoundingBox BoundingBox
+        {
+            get { return boundingBox; }
+            set { boundingBox = value; }
+        }
+
         public Shape PositionalShape
         {
             get { return positionalShape; }
-            private init { positionalShape = value; }
+            private set 
+            {
+                positionalShape = value;
+                UpdateBoundingBox();
+            }
         }
 
         public Vec2 Location
@@ -46,6 +59,8 @@ namespace PhysicsEngine2D_2023
                 var oldLocation = location;
                 location = value;
                 positionalShape.Offset(value-oldLocation);
+                //boundingBox.Offset(value-oldLocation);
+                UpdateBoundingBox();
                 LocationUpdated?.Invoke(this, new LocationUpdateEventArgs(oldLocation, value));
             }
         }
@@ -68,12 +83,10 @@ namespace PhysicsEngine2D_2023
             } 
         }
 
-
-
         public double Mass
         {
             get { return 1/inverseMass; }
-            set { inverseMass = (value == 0) ? 0 : 1/value; }
+            set { inverseMass = (value == 0 || IsStatic) ? 0 : 1/value; }
         }
 
         public double Restitution { get; set; }
@@ -90,6 +103,11 @@ namespace PhysicsEngine2D_2023
             ObjectShape = shape;
             Restitution = restitution;
             Friction = friction;
+        }
+
+        public void UpdateBoundingBox()
+        {
+            BoundingBox = PositionalShape.GetBoundingBox();
         }
 
         public static bool IsIntersected(Object2D o1, Object2D o2, out IntersectionData data)

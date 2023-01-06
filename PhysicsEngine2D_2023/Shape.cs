@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,11 +20,16 @@ namespace PhysicsEngine2D_2023
         //the outside should be on the left side of the edges
         //ex. {(0,0), (1,0), (1,1), (0,1)} has the correct normals
         //while this has inverted normals {(0,0), (0,1), (1,1), (1,0)} therefore InvertNormals() should be called
-        public Vec2[] Vertices { get; private set; }
+        public virtual Vec2[] Vertices { get; private set; }
 
         public Shape(Vec2[] vertices)
         {
             Vertices = vertices;
+        }
+
+        public Shape(Shape s)
+        {
+            Vertices = (Vec2[])s.Vertices.Clone();
         }
 
         public static Shape Rectangle(Vec2 size)
@@ -41,6 +47,25 @@ namespace PhysicsEngine2D_2023
             {
                 Vertices[i] += offset;
             }
+        }
+
+        public BoundingBox GetBoundingBox()
+        {
+            double xMin = double.MaxValue, 
+                   xMax = double.MinValue, 
+                   yMin = double.MaxValue, 
+                   yMax = double.MinValue;
+            foreach (var item in Vertices)
+            {
+                if (item.X < xMin) xMin = item.X;
+                if (item.X > xMax) xMax = item.X;
+                if (item.Y < yMin) yMin = item.Y;
+                if (item.Y > yMax) yMax = item.Y;
+            }
+
+            var start = new Vec2(xMin, yMin);
+            var end   = new Vec2(xMax, yMax);
+            return new BoundingBox(start, end-start);
         }
 
         public LPDData[] IntersectingEdges(Vec2 lineStart, Vec2 lineEnd, double lineBuffer = 0)
@@ -108,11 +133,18 @@ namespace PhysicsEngine2D_2023
         }
     }
 
-    public class Rectangle : Shape
+    public class BoundingBox : Shape
     {
-        public Rectangle(Vec2 size) 
-            : base(new[] { Vec2.Zero, new Vec2(0, size.Y), new Vec2(size.X, size.Y), new Vec2(size.X, 0) }) 
-        { }
+        public double Bottom => base.Vertices[0].Y;
+        public double Left => base.Vertices[0].X;
+        public double Top => base.Vertices[2].Y;
+        public double Right => base.Vertices[2].X;
+        public override Vec2[] Vertices 
+        {
+            get => (Vec2[])base.Vertices.Clone();
+        }
+        public BoundingBox(Shape s) : base(s.GetBoundingBox()) { }
+        public BoundingBox(Vec2 offset, Vec2 size) : base(Shape.Rectangle(offset, size)) { }
     }
 
     public class Circle : Shape
